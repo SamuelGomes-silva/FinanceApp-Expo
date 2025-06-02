@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import {
 	Alert,
 	FlatList,
@@ -18,6 +18,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import ReceiveItem from "../../components/receiveItem";
 import ModalContent from "../../components/modalContent";
+import { AuthContext } from "../../contexts/AuthContext";
 
 export interface BalanceProps {
 	tag: string;
@@ -39,6 +40,7 @@ export default function Dashboard() {
 	const [modalVisible, setModalVisible] = useState<boolean>(false);
 	const [loadingFilter, setLoadingFilter] = useState<boolean>(false);
 	const [dateSelected, setDateSelected] = useState<string>("");
+	const { handleToast } = useContext(AuthContext);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -61,6 +63,11 @@ export default function Dashboard() {
 			setBalance(response.data);
 		} catch (error) {
 			console.log(error);
+			if (error instanceof Error) {
+				handleToast("error", error.message);
+			} else {
+				handleToast("error", "Erro inesperado.");
+			}
 		}
 	}
 
@@ -75,6 +82,11 @@ export default function Dashboard() {
 			setMovements(response.data);
 		} catch (error) {
 			console.log(error);
+			if (error instanceof Error) {
+				handleToast("error", error.message);
+			} else {
+				handleToast("error", "Erro inesperado.");
+			}
 		}
 	}
 
@@ -102,8 +114,14 @@ export default function Dashboard() {
 		try {
 			await api.delete("/receives/delete", { params: { item_id: item_id } });
 			Promise.all([handleGetBalance(date), handleGetMovements(date)]);
+			handleToast("success", "Deletado com sucesso!");
 		} catch (error) {
 			console.log(error);
+			if (error instanceof Error) {
+				handleToast("error", error.message);
+			} else {
+				handleToast("error", "Erro inesperado.");
+			}
 		}
 	}
 
@@ -114,8 +132,14 @@ export default function Dashboard() {
 			Promise.all([handleGetBalance(filter), handleGetMovements(filter)]);
 			setModalVisible(false);
 			setDate(filter);
+			handleToast("success", `Filtro realizado com base no dia ${filter}...`);
 		} catch (error) {
 			console.log(error);
+			if (error instanceof Error) {
+				handleToast("error", error.message);
+			} else {
+				handleToast("error", "Erro inesperado.");
+			}
 		} finally {
 			setLoadingFilter(false);
 		}

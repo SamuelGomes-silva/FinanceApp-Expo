@@ -1,8 +1,9 @@
 import { createContext, JSX, ReactNode, useEffect, useState } from "react";
-import { Alert } from "react-native";
+
 import api from "../services/api";
 import { AxiosError } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
 
 interface AuthContextData {
 	user: UserProps | null;
@@ -15,6 +16,7 @@ interface AuthContextData {
 	handleLogOut: () => Promise<void>;
 	loadingAuth: boolean;
 	isAutenticated: boolean;
+	handleToast: (type: "error" | "success" | "info", text: string) => void;
 }
 
 interface UserProps {
@@ -35,6 +37,7 @@ const defaultContextValue: AuthContextData = {
 	handleLogOut: async () => {},
 	loadingAuth: false,
 	isAutenticated: false,
+	handleToast: () => {},
 };
 
 export const AuthContext = createContext<AuthContextData>(defaultContextValue);
@@ -49,6 +52,13 @@ export default function AuthContextProvider({
 		loadUserLocal();
 	}, []);
 
+	function handleToast(type: "error" | "success" | "info", text: string) {
+		Toast.show({
+			type: type,
+			text1: text,
+		});
+	}
+
 	async function handleLogin(email: string, password: string) {
 		if (!email || !password) return;
 		setLoadingAuth(true);
@@ -60,6 +70,11 @@ export default function AuthContextProvider({
 			await validateUser(response.data?.token);
 		} catch (error: AxiosError | any) {
 			console.log(error);
+			if (error instanceof Error) {
+				handleToast("error", error.message);
+			} else {
+				handleToast("error", "Erro inesperado.");
+			}
 		} finally {
 			setLoadingAuth(false);
 		}
@@ -73,6 +88,7 @@ export default function AuthContextProvider({
 					Authorization: `Bearer ${token}`,
 				},
 			});
+			handleToast("success", "Logado com sucesso!");
 			setUser({
 				balance: response?.data?.balance,
 				id: response?.data?.id,
@@ -99,7 +115,7 @@ export default function AuthContextProvider({
 		try {
 			const token = await AsyncStorage.getItem("@financeExpo:token");
 			if (token) {
-				validateUser(token);
+				await validateUser(token);
 			}
 		} catch (error) {
 			handleLogOut();
@@ -111,9 +127,15 @@ export default function AuthContextProvider({
 	async function handleLogOut() {
 		try {
 			await AsyncStorage.removeItem("@financeExpo:token");
+			handleToast("success", "Deslogado com sucesso!");
 			setUser(null);
 		} catch (error) {
 			console.log(error);
+			if (error instanceof Error) {
+				handleToast("error", error.message);
+			} else {
+				handleToast("error", "Erro inesperado.");
+			}
 		}
 	}
 
@@ -128,7 +150,7 @@ export default function AuthContextProvider({
 			});
 		} catch (error: AxiosError | any) {
 			if (error.response?.data.error === "User already exists") {
-				Alert.alert("Usuario já existe");
+				handleToast("info", "Usuario já existe");
 			}
 			console.log(error);
 		} finally {
@@ -145,6 +167,7 @@ export default function AuthContextProvider({
 				user,
 				loadingAuth,
 				isAutenticated: !!user,
+				handleToast,
 			}}
 		>
 			{children}

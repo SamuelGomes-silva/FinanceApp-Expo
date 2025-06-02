@@ -5,6 +5,7 @@ import { colors } from "./constants/colors";
 import { Routes } from "./routes/routes";
 import AuthContextProvider from "./contexts/AuthContext";
 import { enableScreens } from "react-native-screens";
+import Toast from "react-native-toast-message";
 
 enableScreens();
 
@@ -16,6 +17,7 @@ export default function App() {
 				<SafeAreaView style={styles.container}>
 					<Routes />
 				</SafeAreaView>
+				<Toast position="top" visibilityTime={3000} autoHide />
 			</NavigationContainer>
 		</AuthContextProvider>
 	);

@@ -11,14 +11,16 @@ import {
 import Header from "../../components/header";
 import { colors } from "../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import api from "../../services/api";
+import { AuthContext } from "../../contexts/AuthContext";
 
 export default function Register() {
 	const [type, setType] = useState<string>("receita");
 	const [description, setDescription] = useState<string>("");
 	const [value, setValue] = useState<string>("");
 	const [loading, setLoading] = useState<boolean>(false);
+	const { handleToast } = useContext(AuthContext);
 
 	async function handleRegister() {
 		if (!type.trim() || !value.trim() || !description.trim()) {
@@ -42,8 +44,14 @@ export default function Register() {
 			setType("receita");
 			setDescription("");
 			setValue("");
+			handleToast("success", "Registrado com sucesso!");
 		} catch (error) {
 			console.log(error);
+			if (error instanceof Error) {
+				handleToast("error", error.message);
+			} else {
+				handleToast("error", "Erro inesperado.");
+			}
 		} finally {
 			setLoading(false);
 		}
