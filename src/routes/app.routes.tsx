@@ -1,23 +1,28 @@
 import React, { JSX } from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Dashboard from "../pages/dashboard";
 import Register from "../pages/register";
 import Profile from "../pages/profile";
+import {
+	createDrawerNavigator,
+	DrawerNavigationProp,
+} from "@react-navigation/drawer";
 
-const AppStack = createNativeStackNavigator();
+const AppDrawer = createDrawerNavigator();
 
-export type AppStackParamList = {
+export type AppDrawerParamList = {
 	Home: undefined;
 	Profile: undefined;
 	Register: undefined;
 };
 
+export type DrawerNav = DrawerNavigationProp<AppDrawerParamList>;
+
 export function AppRouteStack(): JSX.Element {
 	return (
-		<AppStack.Navigator>
-			<AppStack.Screen name="Home" component={Dashboard} />
-			<AppStack.Screen name="Register" component={Register} />
-			<AppStack.Screen name="Profile" component={Profile} />
-		</AppStack.Navigator>
+		<AppDrawer.Navigator screenOptions={{ headerShown: false }}>
+			<AppDrawer.Screen name="Home" component={Dashboard} />
+			<AppDrawer.Screen name="Register" component={Register} />
+			<AppDrawer.Screen name="Profile" component={Profile} />
+		</AppDrawer.Navigator>
 	);
 }

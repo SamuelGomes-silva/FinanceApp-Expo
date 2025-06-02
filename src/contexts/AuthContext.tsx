@@ -79,6 +79,7 @@ export default function AuthContextProvider({
 				email: response?.data?.email,
 				name: response?.data?.name,
 			});
+			api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 			await handleAddLocalUser(token);
 		} catch (error) {
 			console.log(error);
