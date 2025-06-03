@@ -143,16 +143,22 @@ export default function AuthContextProvider({
 		if (!name || !email || !password) return;
 		setLoadingAuth(true);
 		try {
-			const response = await api.post("/users", {
+			await api.post("/users", {
 				name: name,
 				email: email,
 				password: password,
 			});
+			handleToast("success", "Usuario cadastrado com sucesso!");
 		} catch (error: AxiosError | any) {
 			if (error.response?.data.error === "User already exists") {
 				handleToast("info", "Usuario já existe");
 			}
 			console.log(error);
+			if (error instanceof Error) {
+				handleToast("error", error.message);
+			} else {
+				handleToast("error", "Erro inesperado.");
+			}
 		} finally {
 			setLoadingAuth(false);
 		}
