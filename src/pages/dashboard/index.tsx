@@ -1,5 +1,6 @@
 import { useCallback, useContext, useEffect, useState } from "react";
 import {
+	ActivityIndicator,
 	Alert,
 	FlatList,
 	Modal,
@@ -39,16 +40,23 @@ export default function Dashboard() {
 	const [movements, setMovements] = useState<ReceiveItemProps[]>([]);
 	const [modalVisible, setModalVisible] = useState<boolean>(false);
 	const [loadingFilter, setLoadingFilter] = useState<boolean>(false);
+	const [loadingDash, setLoadingDash] = useState<boolean>(true);
 	const [dateSelected, setDateSelected] = useState<string>("");
 	const { handleToast } = useContext(AuthContext);
 
 	useFocusEffect(
 		useCallback(() => {
-			let dateNow = new Date().toLocaleDateString("pt-br");
-			setDate(dateNow);
-			handleGetBalance(dateNow);
-			handleGetMovements(dateNow);
-			return () => {};
+			async function loadData() {
+				const dateNow = new Date().toLocaleDateString("pt-br");
+				setDate(dateNow);
+				await Promise.all([
+					handleGetBalance(dateNow),
+					handleGetMovements(dateNow),
+				]);
+				setLoadingDash(false);
+			}
+			loadData();
+			// return () => {}; // Caso precisar fazer alguma ação ao desmontar o component
 		}, [])
 	);
 
@@ -113,7 +121,7 @@ export default function Dashboard() {
 		if (!item_id) return;
 		try {
 			await api.delete("/receives/delete", { params: { item_id: item_id } });
-			Promise.all([handleGetBalance(date), handleGetMovements(date)]);
+			await Promise.all([handleGetBalance(date), handleGetMovements(date)]);
 			handleToast("success", "Deletado com sucesso!");
 		} catch (error) {
 			console.log(error);
@@ -129,7 +137,7 @@ export default function Dashboard() {
 		if (!filter) return;
 		setLoadingFilter(true);
 		try {
-			Promise.all([handleGetBalance(filter), handleGetMovements(filter)]);
+			await Promise.all([handleGetBalance(filter), handleGetMovements(filter)]);
 			setModalVisible(false);
 			setDate(filter);
 			handleToast("success", `Filtro realizado com base no dia ${filter}...`);
@@ -148,6 +156,18 @@ export default function Dashboard() {
 	function handleOpenModal() {
 		setModalVisible(true);
 	}
+	if (loadingDash) {
+		return (
+			<SafeAreaView
+				style={[
+					styles.container,
+					{ justifyContent: "center", alignItems: "center" },
+				]}
+			>
+				<ActivityIndicator color={colors.emeraldGreen} size={"large"} />
+			</SafeAreaView>
+		);
+	}
 
 	return (
 		<>
@@ -161,10 +181,9 @@ export default function Dashboard() {
 							scrollEnabled={balance?.length !== 0}
 							showsHorizontalScrollIndicator={false}
 						>
-							{balance?.length !== 0 &&
-								balance?.map((item) => (
-									<BalanceItem key={item?.tag} item={item} />
-								))}
+							{balance?.map((item) => (
+								<BalanceItem key={item?.tag} item={item} />
+							))}
 						</ScrollView>
 					) : (
 						<Text
@@ -207,7 +226,7 @@ export default function Dashboard() {
 							showsVerticalScrollIndicator={false}
 							keyExtractor={(item) => item.id}
 							renderItem={({ item }) => (
-								<ReceiveItem key={item.id} data={item} onDelete={onDelete} />
+								<ReceiveItem data={item} onDelete={onDelete} />
 							)}
 						/>
 					)}
@@ -272,7 +291,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 15,
 	},
 	alertText: {
-		fontWeight: 700,
+		fontWeight: "700",
 		fontSize: 20,
 		marginTop: 20,
 		paddingHorizontal: 15,
